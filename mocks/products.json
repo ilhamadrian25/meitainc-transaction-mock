@@ -1,0 +1,230 @@
+{
+  "basePath": "/",
+  "rules": [
+    {
+      "id": "products-plp",
+      "description": "GET /products?product=PLP -> katalog khusus PLP",
+      "request": {
+        "method": "GET",
+        "path": "/products",
+        "query": {
+          "product": "PLP"
+        }
+      },
+      "response": {
+        "status": 200,
+        "delayMs": 200,
+        "body": {
+          "responseCode": "00",
+          "responseMessage": "SUCCESS",
+          "product": "{{query.product}}",
+          "data": [
+            {
+              "sku": "PLP-10K",
+              "name": "PLP Voucher 10.000",
+              "price": 10000,
+              "adminFee": 1000,
+              "status": "ACTIVE"
+            },
+            {
+              "sku": "PLP-25K",
+              "name": "PLP Voucher 25.000",
+              "price": 25000,
+              "adminFee": 1000,
+              "status": "ACTIVE"
+            },
+            {
+              "sku": "PLP-50K",
+              "name": "PLP Voucher 50.000",
+              "price": 50000,
+              "adminFee": 1500,
+              "status": "ACTIVE"
+            },
+            {
+              "sku": "PLP-100K",
+              "name": "PLP Voucher 100.000",
+              "price": 100000,
+              "adminFee": 1500,
+              "status": "INACTIVE"
+            }
+          ],
+          "serverTime": "{{now}}"
+        }
+      }
+    },
+    {
+      "id": "products-pln",
+      "description": "GET /products?product=PLN -> katalog token listrik",
+      "request": {
+        "method": "GET",
+        "path": "/products",
+        "query": {
+          "product": "PLN"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "responseCode": "00",
+          "responseMessage": "SUCCESS",
+          "product": "PLN",
+          "data": [
+            {
+              "sku": "PLN-20K",
+              "name": "Token Listrik 20.000",
+              "price": 20000,
+              "adminFee": 2500,
+              "status": "ACTIVE"
+            },
+            {
+              "sku": "PLN-50K",
+              "name": "Token Listrik 50.000",
+              "price": 50000,
+              "adminFee": 2500,
+              "status": "ACTIVE"
+            }
+          ],
+          "serverTime": "{{now}}"
+        }
+      }
+    },
+    {
+      "id": "products-pulsa-by-operator",
+      "description": "GET /products?product=PULSA&operator=TELKOMSEL -> lebih spesifik, menang atas products-pulsa",
+      "request": {
+        "method": "GET",
+        "path": "/products",
+        "query": {
+          "product": "PULSA",
+          "operator": {
+            "$regex": "^(TELKOMSEL|TSEL)$"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "responseCode": "00",
+          "responseMessage": "SUCCESS",
+          "product": "PULSA",
+          "operator": "{{query.operator}}",
+          "data": [
+            {
+              "sku": "TSEL-10K",
+              "name": "Telkomsel 10.000",
+              "price": 11500,
+              "adminFee": 0,
+              "status": "ACTIVE"
+            },
+            {
+              "sku": "TSEL-25K",
+              "name": "Telkomsel 25.000",
+              "price": 26500,
+              "adminFee": 0,
+              "status": "ACTIVE"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "products-pulsa",
+      "description": "GET /products?product=PULSA tanpa operator",
+      "request": {
+        "method": "GET",
+        "path": "/products",
+        "query": {
+          "product": "PULSA"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "responseCode": "00",
+          "responseMessage": "SUCCESS",
+          "product": "PULSA",
+          "data": [
+            {
+              "sku": "PULSA-10K",
+              "name": "Pulsa 10.000",
+              "price": 11000,
+              "adminFee": 0,
+              "status": "ACTIVE"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "products-unknown",
+      "description": "product code tidak dikenal -> 404 bisnis",
+      "request": {
+        "method": "GET",
+        "path": "/products",
+        "query": {
+          "product": "*"
+        }
+      },
+      "response": {
+        "status": 404,
+        "body": {
+          "responseCode": "14",
+          "responseMessage": "PRODUCT_NOT_FOUND",
+          "product": "{{query.product}}",
+          "data": []
+        }
+      }
+    },
+    {
+      "id": "products-all",
+      "description": "GET /products tanpa query -> daftar kategori (fallback paling umum)",
+      "request": {
+        "method": "GET",
+        "path": "/products"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "responseCode": "00",
+          "responseMessage": "SUCCESS",
+          "data": [
+            {
+              "code": "PLP",
+              "name": "PLP Voucher"
+            },
+            {
+              "code": "PLN",
+              "name": "Token Listrik"
+            },
+            {
+              "code": "PULSA",
+              "name": "Pulsa Prabayar"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "product-detail-by-sku",
+      "description": "GET /products/:sku -> path param",
+      "request": {
+        "method": "GET",
+        "path": "/products/:sku"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "responseCode": "00",
+          "responseMessage": "SUCCESS",
+          "data": {
+            "sku": "{{params.sku}}",
+            "name": "Produk {{params.sku}}",
+            "price": 25000,
+            "adminFee": 1000,
+            "status": "ACTIVE"
+          }
+        }
+      }
+    }
+  ]
+}

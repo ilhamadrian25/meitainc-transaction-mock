@@ -1,0 +1,153 @@
+{
+  "basePath": "/",
+  "rules": [
+    {
+      "id": "inquiry-insufficient-balance",
+      "description": "POST /transactions/inquiry dengan amount > 1.000.000 -> saldo tidak cukup",
+      "request": {
+        "method": "POST",
+        "path": "/transactions/inquiry",
+        "body": { "amount": { "$gt": 1000000 } }
+      },
+      "response": {
+        "status": 400,
+        "body": {
+          "responseCode": "51",
+          "responseMessage": "INSUFFICIENT_BALANCE",
+          "data": { "requestedAmount": "{{body.amount}}", "availableBalance": 1000000 }
+        }
+      }
+    },
+    {
+      "id": "inquiry-success",
+      "description": "POST /transactions/inquiry -> data tagihan",
+      "request": { "method": "POST", "path": "/transactions/inquiry" },
+      "response": {
+        "status": 200,
+        "delayMs": 400,
+        "body": {
+          "responseCode": "00",
+          "responseMessage": "SUCCESS",
+          "data": {
+            "inquiryId": "{{uuid}}",
+            "sku": "{{body.sku||PLP-10K}}",
+            "customerNumber": "{{body.customerNumber||081234567890}}",
+            "customerName": "Nasabah Mock",
+            "amount": "{{body.amount||10000}}",
+            "adminFee": 1000,
+            "expiredAt": "{{now}}"
+          }
+        }
+      }
+    },
+    {
+      "id": "payment-declined-by-header",
+      "description": "Kirim header x-mock-case: DECLINED untuk memaksa transaksi gagal",
+      "request": {
+        "method": "POST",
+        "path": "/transactions/payment",
+        "headers": { "x-mock-case": "DECLINED" }
+      },
+      "response": {
+        "status": 402,
+        "body": {
+          "responseCode": "05",
+          "responseMessage": "TRANSACTION_DECLINED",
+          "data": { "referenceNumber": "{{uuid}}", "reason": "Ditolak oleh biller" }
+        }
+      }
+    },
+    {
+      "id": "payment-success",
+      "description": "POST /transactions/payment -> sukses",
+      "request": { "method": "POST", "path": "/transactions/payment" },
+      "response": {
+        "status": 200,
+        "delayMs": 600,
+        "body": {
+          "responseCode": "00",
+          "responseMessage": "SUCCESS",
+          "data": {
+            "referenceNumber": "{{uuid}}",
+            "inquiryId": "{{body.inquiryId||-}}",
+            "sku": "{{body.sku||PLP-10K}}",
+            "amount": "{{body.amount||10000}}",
+            "status": "SUCCESS",
+            "serialNumber": "SN{{randomInt:100000000:999999999}}",
+            "paidAt": "{{now}}"
+          }
+        }
+      }
+    },
+    {
+      "id": "transaction-status-polling",
+      "description": "GET /transactions/:id/status -> PENDING, PENDING, lalu SUCCESS (berputar tiap hit)",
+      "request": { "method": "GET", "path": "/transactions/:id/status" },
+      "sequence": [
+        {
+          "status": 200,
+          "body": { "responseCode": "09", "responseMessage": "PENDING", "data": { "referenceNumber": "{{params.id}}", "status": "PENDING", "attempt": 1 } }
+        },
+        {
+          "status": 200,
+          "body": { "responseCode": "09", "responseMessage": "PENDING", "data": { "referenceNumber": "{{params.id}}", "status": "PENDING", "attempt": 2 } }
+        },
+        {
+          "status": 200,
+          "body": { "responseCode": "00", "responseMessage": "SUCCESS", "data": { "referenceNumber": "{{params.id}}", "status": "SUCCESS", "settledAt": "{{now}}" } }
+        }
+      ],
+      "response": {}
+    },
+    {
+      "id": "transaction-history-empty",
+      "description": "GET /transactions?status=FAILED -> riwayat kosong",
+      "request": {
+        "method": "GET",
+        "path": "/transactions",
+        "query": { "status": "FAILED" }
+      },
+      "response": {
+        "status": 200,
+        "body": { "responseCode": "00", "responseMessage": "SUCCESS", "data": [], "meta": { "page": 1, "total": 0 } }
+      }
+    },
+    {
+      "id": "transaction-history",
+      "description": "GET /transactions -> riwayat transaksi",
+      "request": { "method": "GET", "path": "/transactions" },
+      "response": {
+        "status": 200,
+        "body": {
+          "responseCode": "00",
+          "responseMessage": "SUCCESS",
+          "data": [
+            { "referenceNumber": "TRX-0001", "sku": "PLP-10K", "amount": 10000, "status": "SUCCESS", "createdAt": "2026-09-01T08:12:00Z" },
+            { "referenceNumber": "TRX-0002", "sku": "PLN-50K", "amount": 50000, "status": "PENDING", "createdAt": "2026-09-03T11:30:00Z" },
+            { "referenceNumber": "TRX-0003", "sku": "TSEL-25K", "amount": 26500, "status": "FAILED", "createdAt": "2026-09-05T19:02:00Z" }
+          ],
+          "meta": { "page": "{{query.page||1}}", "limit": "{{query.limit||10}}", "total": 3 }
+        }
+      }
+    },
+    {
+      "id": "server-error-simulation",
+      "description": "Path khusus untuk uji error handling 500",
+      "request": { "method": "*", "path": "/simulate/500" },
+      "response": {
+        "status": 500,
+        "body": { "responseCode": "99", "responseMessage": "INTERNAL_SERVER_ERROR" }
+      }
+    },
+    {
+      "id": "timeout-simulation",
+      "description": "Delay 10 detik untuk uji timeout client",
+      "request": { "method": "*", "path": "/simulate/timeout" },
+      "response": {
+        "status": 200,
+        "delayMs": 10000,
+        "body": { "responseCode": "00", "responseMessage": "SLOW_BUT_OK" }
+      }
+    }
+  ]
+}
